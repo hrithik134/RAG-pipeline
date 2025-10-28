@@ -24,7 +24,7 @@ class GeminiLLMService(BaseLLMService):
     ):
         """Initialize Gemini connection."""
         self.api_key = api_key or settings.google_api_key
-        self.model = model or settings.gemini_model  # e.g. "gemini-pro"
+        self.model = model or settings.google_model  # e.g. "gemini-2.5-pro"
         self.default_temperature = temperature
         self.default_max_tokens = max_tokens
         self.initialized = False
@@ -102,3 +102,7 @@ class GeminiLLMService(BaseLLMService):
             response = await self.generate(prompt, **kwargs)
             responses.append(response)
         return responses
+    
+    def get_model_name(self) -> str:
+        """Get the model name."""
+        return self.model
