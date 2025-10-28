@@ -1,0 +1,62 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      # Skipped - no push. User will handle this manually
+      run: echo "Skipping login - no push configured"
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          rag-pipeline
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Print image tags
+      run: |
+        echo "Docker image built with tags:"
+        echo "${{ steps.meta.outputs.tags }}"
+    
+    - name: Image summary
+      run: |
+        echo "Image built successfully (not pushed)"
+        echo "To push manually, use:"
+        echo "docker push <registry>/rag-pipeline:<tag>"
+    
+    # Note: Image scanning and push steps skipped as per user request
+    # User will handle push in next prompt
+

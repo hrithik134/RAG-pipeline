@@ -1,0 +1,52 @@
+# Core FastAPI and server
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+gunicorn==21.2.0
+python-multipart==0.0.12
+
+# Configuration and validation
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+# Database
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# Vector database
+pinecone-client==5.0.1
+
+# LLM providers
+openai==1.54.0
+google-generativeai==0.8.3
+
+# Document processing
+tiktoken==0.8.0
+pymupdf==1.24.14
+python-docx==1.1.2
+pdfminer.six==20221105
+chardet==5.2.0
+
+# RAG and retrieval
+rank-bm25==0.2.2
+
+# API utilities
+slowapi==0.1.9
+redis==5.0.1
+
+# Background tasks
+celery[redis]==5.3.6
+
+# HTTP client and retries
+httpx==0.26.0
+tenacity==8.2.3
+
+# Additional dependencies for document processing
+aiofiles==23.2.1
+
+# Testing dependencies
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+pytest-mock==3.14.0

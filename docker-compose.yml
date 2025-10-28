@@ -1,0 +1,338 @@
+version: '3.8'
+
+# ==========================================
+# RAG Pipeline - Docker Compose Configuration
+# ==========================================
+# Production-ready multi-container setup with:
+# - PostgreSQL database with health checks
+# - Redis for caching and rate limiting
+# - FastAPI application with Gunicorn
+# - pgAdmin for database management
+# - Resource limits and logging configuration
+# ==========================================
+
+services:
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: RAG-PostgreSQL
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rag_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag_password}
+      POSTGRES_DB: ${POSTGRES_DB:-rag_db}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - rag-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Redis Cache & Rate Limiting
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: RAG-Redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - rag-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ==========================================
+  # Database Migration Service
+  # ==========================================
+  # Runs Alembic migrations once on startup
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: RAG-Migrations
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-rag_user}:${POSTGRES_PASSWORD:-rag_password}@postgres:5432/${POSTGRES_DB:-rag_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rag-network
+    command: alembic upgrade head
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ==========================================
+  # FastAPI Application with Gunicorn
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+    container_name: RAG-API
+    environment:
+      # Application Settings
+      - APP_NAME=${APP_NAME:-RAG Pipeline}
+      - APP_VERSION=${APP_VERSION:-1.0.0}
+      - APP_ENV=${APP_ENV:-development}
+      - DEBUG=${DEBUG:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - API_WORKERS=${API_WORKERS:-4}
+      
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-rag_user}:${POSTGRES_PASSWORD:-rag_password}@postgres:5432/${POSTGRES_DB:-rag_db}
+      - DB_ECHO=${DB_ECHO:-false}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-10}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-20}
+      
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      
+      # File Upload Configuration
+      - UPLOAD_DIR=/app/uploads
+      - MAX_DOCUMENTS_PER_UPLOAD=${MAX_DOCUMENTS_PER_UPLOAD:-20}
+      - MAX_PAGES_PER_DOCUMENT=${MAX_PAGES_PER_DOCUMENT:-1000}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
+      - ALLOWED_EXTENSIONS=${ALLOWED_EXTENSIONS:-pdf,docx,txt,md}
+      
+      # Chunking Configuration
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-150}
+      - MIN_CHUNK_SIZE=${MIN_CHUNK_SIZE:-100}
+      
+      # CORS Configuration
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000}
+      - CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS:-true}
+      
+      # Pinecone Configuration
+      - PINECONE_API_KEY=${PINECONE_API_KEY:-}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-ragingestion-google}
+      - PINECONE_DIMENSION=${PINECONE_DIMENSION:-768}
+      - PINECONE_METRIC=${PINECONE_METRIC:-cosine}
+      - PINECONE_CLOUD=${PINECONE_CLOUD:-aws}
+      - PINECONE_REGION=${PINECONE_REGION:-us-east-1}
+      
+      # Google AI Configuration
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GOOGLE_MODEL=${GOOGLE_MODEL:-gemini-2.5-pro}
+      - GOOGLE_EMBEDDING_MODEL=${GOOGLE_EMBEDDING_MODEL:-models/text-embedding-004}
+      - GOOGLE_TEMPERATURE=${GOOGLE_TEMPERATURE:-0.1}
+      - GOOGLE_MAX_TOKENS=${GOOGLE_MAX_TOKENS:-2048}
+      
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-large}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-2048}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.1}
+      
+      # Provider Selection
+      - LLM_PROVIDER=${LLM_PROVIDER:-google}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-google}
+      
+      # Embedding Configuration
+      - EMBED_BATCH_SIZE=${EMBED_BATCH_SIZE:-64}
+      - UPSERT_BATCH_SIZE=${UPSERT_BATCH_SIZE:-100}
+      - INDEX_CONCURRENCY=${INDEX_CONCURRENCY:-2}
+      - EMBED_RETRY_MAX=${EMBED_RETRY_MAX:-5}
+      - EMBED_RETRY_DELAY=${EMBED_RETRY_DELAY:-1.0}
+      
+      # RAG Configuration
+      - RAG_TOP_K=${RAG_TOP_K:-10}
+      - RAG_MMR_LAMBDA=${RAG_MMR_LAMBDA:-0.5}
+      - RAG_MAX_CONTEXT_TOKENS=${RAG_MAX_CONTEXT_TOKENS:-6000}
+      - RAG_TEMPERATURE=${RAG_TEMPERATURE:-0.1}
+      
+      # Retrieval Configuration
+      - RETRIEVAL_METHOD=${RETRIEVAL_METHOD:-hybrid}
+      - RETRIEVAL_TOP_K=${RETRIEVAL_TOP_K:-10}
+      - MMR_LAMBDA=${MMR_LAMBDA:-0.5}
+      - USE_HYBRID_SEARCH=${USE_HYBRID_SEARCH:-true}
+      - BM25_K1=${BM25_K1:-1.2}
+      - BM25_B=${BM25_B:-0.75}
+      - RRF_K=${RRF_K:-60}
+      
+      # LLM Configuration
+      - LLM_MAX_RETRIES=${LLM_MAX_RETRIES:-3}
+      - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:-30}
+      
+      # Rate Limiting Configuration
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_STORAGE_URL=redis://redis:6379/0
+      - RATE_LIMIT_UPLOAD=${RATE_LIMIT_UPLOAD:-10/hour}
+      - RATE_LIMIT_QUERY=${RATE_LIMIT_QUERY:-20/minute}
+      - RATE_LIMIT_READ=${RATE_LIMIT_READ:-100/minute}
+      - RATE_LIMIT_DELETE=${RATE_LIMIT_DELETE:-20/minute}
+      - RATE_LIMIT_HEALTH=${RATE_LIMIT_HEALTH:-300/minute}
+      - RATE_LIMIT_METRICS=${RATE_LIMIT_METRICS:-30/minute}
+      
+      # Background Tasks
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      
+      # Monitoring
+      - ENABLE_METRICS=${ENABLE_METRICS:-false}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    
+    ports:
+      - "${API_PORT:-8000}:8000"
+    
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app:/app/app  # Hot reload for development
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    
+    networks:
+      - rag-network
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    
+    # Development: Use uvicorn with reload (default)
+    # Production: Comment out this line to use Gunicorn from Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ==========================================
+  # pgAdmin - Database Management UI
+  # ==========================================
+  # Access at http://localhost:5050
+  # Optional service - comment out if not needed
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: RAG-pgAdmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ragpipeline.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - rag-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    profiles:
+      - tools  # Optional profile - start with: docker-compose --profile tools up
+
+# ==========================================
+# Volumes - Persistent Data Storage
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+    name: rag_postgres_data
+  redis_data:
+    driver: local
+    name: rag_redis_data
+  pgadmin_data:
+    driver: local
+    name: rag_pgadmin_data
+
+# ==========================================
+# Networks - Container Communication
+# ==========================================
+networks:
+  rag-network:
+    driver: bridge
+    name: rag-network
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

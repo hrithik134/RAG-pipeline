@@ -1,0 +1,199 @@
+# ==========================================
+# .dockerignore - Files to exclude from Docker build context
+# ==========================================
+# This file reduces build time and image size by excluding
+# unnecessary files from the Docker build context
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ==========================================
+# Environment Files (contain secrets!)
+# ==========================================
+.env
+.env.*
+!env.example
+!env.development
+!env.production
+*.env.local
+*.env.*.local
+
+# ==========================================
+# IDE and Editor Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.cursor/
+*.code-workspace
+.project
+.pydevproject
+.settings/
+
+# ==========================================
+# Testing
+# ==========================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# ==========================================
+# Type Checking
+# ==========================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ==========================================
+# Jupyter Notebook
+# ==========================================
+.ipynb_checkpoints
+*.ipynb
+
+# ==========================================
+# Git
+# ==========================================
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# ==========================================
+# Documentation (not needed in image)
+# ==========================================
+*.md
+!README.md
+docs/
+site/
+PHASE_*.md
+*.pdf
+
+# ==========================================
+# Uploads (will be mounted as volume)
+# ==========================================
+uploads/
+temp/
+tmp/
+*.tmp
+
+# ==========================================
+# Logs
+# ==========================================
+*.log
+logs/
+log/
+
+# ==========================================
+# OS Files
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+
+# ==========================================
+# Docker Files (prevent recursion)
+# ==========================================
+Dockerfile
+Dockerfile.*
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# ==========================================
+# Scripts (not needed in production image)
+# ==========================================
+*.ps1
+*.sh
+*.bat
+*.cmd
+
+# ==========================================
+# Database Files
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+dump.rdb
+
+# ==========================================
+# Backup Files
+# ==========================================
+*.backup
+*.bak
+*.old
+*~
+
+# ==========================================
+# CI/CD
+# ==========================================
+.github/
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# ==========================================
+# Test and Sample Data
+# ==========================================
+tests/
+test/
+test_*.py
+*_test.py
+conftest.py
+pytest.ini
+.coveragerc
+setup.cfg
+
+# ==========================================
+# Alembic (will be copied separately)
+# ==========================================
+alembic/versions/__pycache__/
