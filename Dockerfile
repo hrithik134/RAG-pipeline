@@ -70,7 +70,8 @@ RUN groupadd -r -g 1000 appuser && \
     chown -R appuser:appuser /app
 
 # Copy Python dependencies from builder stage
-#COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy Gunicorn configuration
 COPY --chown=appuser:appuser gunicorn_conf.py .

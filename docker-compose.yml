@@ -85,34 +85,7 @@ services:
         max-size: "5m"
         max-file: "3"
 
-  # ==========================================
-  # Database Migration Service
-  # ==========================================
-  # Runs Alembic migrations once on startup
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: RAG-Migrations
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-rag_user}:${POSTGRES_PASSWORD:-rag_password}@postgres:5432/${POSTGRES_DB:-rag_db}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - rag-network
-    command: alembic upgrade head
-    restart: "no"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "5m"
-        max-file: "2"
+  # Migration will be run manually via: docker-compose exec app alembic upgrade head
 
   # ==========================================
   # FastAPI Application with Gunicorn
@@ -240,8 +213,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     
     networks:
       - rag-network
