@@ -333,7 +333,7 @@ MMR_LAMBDA=0.5
 USE_HYBRID_SEARCH=false
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Run all tests:
 ```bash
@@ -466,7 +466,7 @@ docker-compose exec api alembic upgrade head
 
 [Add your license here]
 
-## 🤝 Contributing
+## Contributing
 
 [Add contribution guidelines here]
 
