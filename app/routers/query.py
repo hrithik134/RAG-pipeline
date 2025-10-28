@@ -136,7 +136,6 @@ async def list_queries(
                 id=q.id,
                 query_text=q.query_text,
                 answer_preview=q.response[:200] + "..." if len(q.response) > 200 else q.response,
-                upload_id=q.upload_id,
                 llm_provider=q.llm_provider,
                 latency_ms=q.latency_ms,
                 created_at=q.created_at

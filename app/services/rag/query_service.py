@@ -120,7 +120,7 @@ class QueryService:
             
             # Step 5: Extract citations
             citations = self.citation_manager.extract_citations(
-                answer_text=answer,
+                answer_text=answer.text,
                 chunks_used=selected_chunks
             )
             
@@ -130,7 +130,7 @@ class QueryService:
             response = QueryResponse(
                 query_id=query_id,
                 query=request.query,
-                answer=answer,
+                answer=answer.text,
                 citations=citations,
                 used_chunks=[
                     ChunkUsed(
