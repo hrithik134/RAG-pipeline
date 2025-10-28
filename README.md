@@ -2,7 +2,7 @@
 
 A production-ready Retrieval-Augmented Generation (RAG) pipeline that allows users to upload documents and ask questions based on their content. The system leverages Pinecone vector database for efficient retrieval and LLM APIs (OpenAI/Gemini) for generating contextual responses.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Docker Desktop** installed and running
@@ -68,7 +68,7 @@ Expected response:
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Document Ingestion**: Upload up to 20 documents (max 1000 pages each) with support for PDF, DOCX, and TXT formats
 - **Intelligent Chunking**: Token-aware text chunking with configurable overlap for optimal retrieval
@@ -79,7 +79,7 @@ Expected response:
 - **Containerized**: Docker and Docker Compose for easy deployment
 - **Production Ready**: Rate limiting, CORS, health checks, and comprehensive error handling
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -92,7 +92,7 @@ You'll also need API keys:
 - **OpenAI API key** ([Get it here](https://platform.openai.com/account/api-keys)) OR
 - **Google AI API key** ([Get it here](https://aistudio.google.com/app/apikey))
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────┐
@@ -119,7 +119,7 @@ You'll also need API keys:
   └──────────┘  └──────────┘
 ```
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### Option 1: Docker (Recommended)
 
@@ -205,7 +205,7 @@ You'll also need API keys:
    python -m app.main
    ```
 
-## 📖 API Usage
+## API Usage
 
 ### Base URL
 ```
@@ -287,7 +287,7 @@ curl -X DELETE http://localhost:8000/v1/documents/{document_id}
 ### For Complete API Reference
 See [docs/api-examples.md](docs/api-examples.md) for detailed examples of all endpoints.
 
-## ⚙️ Configuration
+## Configuration
 
 ### LLM Provider Selection
 
@@ -358,7 +358,7 @@ open htmlcov/index.html  # On macOS
 start htmlcov/index.html # On Windows
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Local Deployment
 ```bash
@@ -368,7 +368,7 @@ docker-compose up -d
 ### Cloud Deployment
 *Detailed cloud deployment guides (AWS, GCP, Azure) will be provided in Phase 9.*
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 rag-pipeline/
@@ -392,7 +392,7 @@ rag-pipeline/
 └── README.md               # This file
 ```
 
-## 🔧 Development
+## Development
 
 ### Code Quality Tools
 
@@ -430,7 +430,7 @@ ruff check app tests --fix
 mypy app
 ```
 
-## 📊 Performance & Limits
+## Performance & Limits
 
 - **Max documents per upload**: 20
 - **Max pages per document**: 1,000
@@ -440,7 +440,7 @@ mypy app
 - **Default chunk overlap**: 150 tokens
 - **Rate limiting**: 100 requests/minute (configurable)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Docker Issues
 ```bash
@@ -462,7 +462,7 @@ docker-compose up -d postgres
 docker-compose exec api alembic upgrade head
 ```
 
-## 📝 License
+## License
 
 [Add your license here]
 
@@ -470,13 +470,13 @@ docker-compose exec api alembic upgrade head
 
 [Add contribution guidelines here]
 
-## 📧 Contact
+## Contact
 
 [Add contact information here]
 
 ---
 
-**Status**: Phase 8 Complete ✅
+**Status**: Phase 8 Complete
 
 - [x] Phase 0: Project scaffold with FastAPI
 - [x] Phase 1: Database models
@@ -491,7 +491,7 @@ docker-compose exec api alembic upgrade head
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 For detailed documentation, see the [docs/](docs/) directory:
 
@@ -499,4 +499,3 @@ For detailed documentation, see the [docs/](docs/) directory:
 - **[API Examples](docs/api-examples.md)** - Complete API reference with cURL
 - **[Operations](docs/operations.md)** - Operational runbook and troubleshooting
 - **[Configuration](docs/configuration.md)** - Environment variables and setup
-

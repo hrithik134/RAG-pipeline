@@ -1,0 +1,1 @@
+This is a test document for the RAG Pipeline. It contains sample text about artificial intelligence and machine learning.
